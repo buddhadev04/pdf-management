@@ -12,7 +12,8 @@ const HOST = process.env.HOST || '0.0.0.0';
 app.use(cors());
 app.use(express.json());
 app.use('/static', express.static(path.join(__dirname, 'public')));
-app.use(cors({ origin: process.env.FRONTEND_URL }));
+let forntendUrl = 'https://doc-vault.onrender.com';
+app.use(cors({ origin: forntendUrl}));
 app.use(apiRoutes);
 
 // Multer error handling middleware
