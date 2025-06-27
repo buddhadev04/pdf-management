@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Verify transporter configuration
+// Verify transporter configuration on startup
 transporter.verify((error, success) => {
   if (error) {
     console.error('Nodemailer configuration error:', error.message, error.stack);
@@ -39,14 +39,14 @@ exports.verifyPdfAccess = async (req, res) => {
       return res.status(400).json({ error: 'pdfId and password are required' });
     }
 
-    const CORRECT_PASSWORD = 'secret123';
+    const CORRECT_PASSWORD = process.env.CORRECT_PASSWORD || 'secret123';
     if (password !== CORRECT_PASSWORD) {
-      console.error('Incorrect password attempt:', { pdfId });
+      console.error('Incorrect password attempt:', { pdfId, password });
       return res.status(401).json({ error: 'Incorrect password' });
     }
 
     const token = uuidv4();
-    pendingApprovals.set(token, { pdfId, userPassword: password, approved: false });
+    pendingApprovals.set(token, { pdfId, userPassword: password, approved: false, timestamp: Date.now() });
 
     const API_BASE_URL = process.env.API_BASE_URL || 'https://pdf-management-bkct.onrender.com';
     const approvalLink = `${API_BASE_URL}/api/approve/${token}`;
@@ -59,16 +59,50 @@ exports.verifyPdfAccess = async (req, res) => {
         <h3>File Access Approval Request</h3>
         <p>A user is requesting access to PDF ID <strong>${pdfId}</strong>.</p>
         <p><a href="${approvalLink}">Click here to approve access</a></p>
+        <p>If you did not request this, please ignore this email.</p>
       `,
     };
 
-    // Send email
+    // Verify transporter before sending email
+    await new Promise((resolve, reject) => {
+      transporter.verify((error) => {
+        if (error) {
+          console.error('Transporter verification failed before sending email:', error.message, error.stack);
+          reject(new Error(`Transporter verification failed: ${error.message}`));
+        } else {
+          console.log('Transporter verified successfully before sending email');
+          resolve();
+        }
+      });
+    });
+
+    // Send email with detailed logging
     const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent: ${info.response}, Approval link: ${approvalLink}`);
+    console.log('Email sent successfully:', {
+      response: info.response,
+      messageId: info.messageId,
+      approvalLink,
+      to: mailOptions.to,
+      from: mailOptions.from,
+    });
+
+    // Clean up old pending approvals (remove entries older than 24 hours)
+    const now = Date.now();
+    for (const [key, value] of pendingApprovals) {
+      if (value.timestamp && now - value.timestamp > 24 * 60 * 60 * 1000) {
+        console.log(`Cleaning up expired approval token: ${key}`);
+        pendingApprovals.delete(key);
+      }
+    }
+
     return res.json({ token, message: 'Waiting for approval' });
   } catch (error) {
-    console.error('Error in verifyPdfAccess:', error.message, error.stack);
-    return res.status(500).json({ error: 'Failed to process request. Please try again later.' });
+    console.error('Error in verifyPdfAccess:', {
+      message: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+    });
+    return res.status(500).json({ error: `Failed to process request: ${error.message}` });
   }
 };
 
