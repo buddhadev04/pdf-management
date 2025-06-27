@@ -7,13 +7,12 @@ const { connectToMongoDB } = require('./config/db');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const HOST = process.env.HOST || '0.0.0.0';
 
 app.use(cors());
 app.use(express.json());
 app.use('/static', express.static(path.join(__dirname, 'public')));
-let forntendUrl = 'https://doc-vault.onrender.com';
-app.use(cors({ origin: forntendUrl}));
+let frontendUrl = 'https://doc-vault.onrender.com';
+app.use(cors({ origin: frontendUrl }));
 app.use(apiRoutes);
 
 // Multer error handling middleware
@@ -27,8 +26,8 @@ app.use((err, req, res, next) => {
 
 // Start server after MongoDB connection
 connectToMongoDB().then(() => {
-  app.listen(PORT, HOST, () => {
-    console.log(`Server running on ${process.env.BASE_URL || `http://${HOST}:${PORT}`}`);
+  app.listen(PORT, () => {
+    console.log(`Server running on ${process.env.BASE_URL || `http://localhost:${PORT}`}`);
   });
 }).catch((err) => {
   console.error('Failed to start server due to MongoDB connection error:', err);
