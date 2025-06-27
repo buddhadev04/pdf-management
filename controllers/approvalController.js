@@ -13,8 +13,8 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'ankitsingh07897@gmail.com',
-    pass: process.env.EMAIL_PASS || 'elrj uxrl srbk lgoc',
+    user: 'ankitsingh07897@gmail.com',
+    pass: 'elrj uxrl srbk lgoc',
   },
 });
 
