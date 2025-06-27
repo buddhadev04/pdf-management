@@ -24,8 +24,10 @@ exports.verifyPdfAccess = (req, res) => {
 
   const token = uuidv4();
   pendingApprovals.set(token, { pdfId, userPassword: password, approved: false });
+  const API_BASE_URL = 'https://pdf-management-bkct.onrender.com';
 
-  const approvalLink = `${process.env.BASE_URL}/api/approve/${token}`;
+
+  const approvalLink = `${API_BASE_URL}/api/approve/${token}`;
   const mailOptions = {
     from: process.env.EMAIL_USER || 'ankitsingh07897@gmail.com',
     to: process.env.EMAIL_USER || 'ankitsingh07897@gmail.com',
