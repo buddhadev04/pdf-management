@@ -49,7 +49,7 @@ exports.verifyPdfAccess = async (req, res) => {
     pendingApprovals.set(token, { pdfId, userPassword: password, approved: false, timestamp: Date.now() });
 
     const API_BASE_URL = process.env.API_BASE_URL || 'https://pdf-management-bkct.onrender.com';
-    const approvalLink = `${API_BASE_URL}/api/approve/${token}`;
+    const approvalLink = `${API_BASE_URL}/approve/${token}`;
 
     const mailOptions = {
       from: `"PDF Vault" <${process.env.EMAIL_USER}>`,
